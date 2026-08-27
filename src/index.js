@@ -12,6 +12,7 @@ import { CONFIG, SUPPORTED_LANGUAGES, ANNOUNCEMENT_MODES } from './config.js';
 import { registerSlashCommands } from './commands/slashCommands.js';
 import { queueManager } from './voice/queueManager.js';
 import { ttsManager } from './tts/ttsManager.js';
+import { entersState, VoiceConnectionStatus } from '@discordjs/voice';
 
 import ffmpegPath from 'ffmpeg-static';
 if (ffmpegPath) {
