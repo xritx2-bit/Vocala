@@ -111,7 +111,7 @@ export class TTSManager {
   }
 
   /**
-   * Generates Raw PCM audio resource for the text using msedge-tts + prism.FFmpeg
+   * Generates native Discord OggOpus audio resource using msedge-tts + FFmpeg libopus
    */
   async createAudioResourceForText(text, guildId) {
     const voiceId = this.getVoice(guildId);
@@ -132,17 +132,19 @@ export class TTSManager {
         '-loglevel', '0',
         '-f', 'mp3',
         '-i', 'pipe:0',
-        '-f', 's16le',
+        '-c:a', 'libopus',
+        '-b:a', '64k',
         '-ar', '48000',
-        '-ac', '2'
+        '-ac', '2',
+        '-f', 'ogg'
       ]
     });
 
     const readable = Readable.from(audioBuffer);
-    const pcmStream = readable.pipe(ffmpeg);
+    const oggStream = readable.pipe(ffmpeg);
 
-    return createAudioResource(pcmStream, {
-      inputType: StreamType.Raw
+    return createAudioResource(oggStream, {
+      inputType: StreamType.OggOpus
     });
   }
 }

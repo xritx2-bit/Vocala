@@ -79,6 +79,12 @@ client.on('interactionCreate', async (interaction) => {
         const textChannel = options.getChannel('text_channel') || interaction.channel || targetVoiceChannel;
         const queue = queueManager.join(targetVoiceChannel, textChannel);
 
+        try {
+          await entersState(queue.connection, VoiceConnectionStatus.Ready, 10_000);
+        } catch (e) {
+          console.warn('[VoiceConnection] Handshake taking longer than expected:', e.message);
+        }
+
         const currentVoiceId = ttsManager.getVoice(guild.id);
         const voiceObj = SUPPORTED_VOICES.find(v => v.id === currentVoiceId) || SUPPORTED_VOICES[0];
         const modeKey = ttsManager.getMode(guild.id);
