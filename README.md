@@ -124,6 +124,24 @@ You can switch voices at any time using `/voice`.
 
 ---
 
+## 🚀 Deploy to Railway (24/7 Free & Easy Hosting)
+
+You can host Vocala on [Railway.app](https://railway.app) to keep the bot online 24/7 without needing your PC turned on:
+
+1. **Log in to Railway**: Go to [railway.app](https://railway.app) and sign in with GitHub.
+2. **Create New Project**: Click **New Project** ➔ **Deploy from GitHub repo**.
+3. **Select Repository**: Choose `xritx2-bit/Vocala`.
+4. **Add Variables**:
+   - Go to your newly created service in Railway ➔ Click the **Variables** tab.
+   - Click **Add Variable** and add:
+     - `DISCORD_TOKEN` = `your_bot_token`
+     - `CLIENT_ID` = `your_application_client_id`
+     - `DEFAULT_VOICE` = `hi-IN-MadhurNeural` (optional)
+     - `DEFAULT_MODE` = `hinglish` (optional)
+5. **Deploy**: Railway will automatically detect the configuration, build the container, and start your bot!
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -140,6 +158,9 @@ Vocala/
 ├── test/
 │   └── test-tts.js            # Offline synthesis verification test
 ├── .env.example               # Environment template
+├── Dockerfile                 # Container setup for Railway/Docker
+├── railway.json               # Railway build & restart policy
+├── Procfile                   # Worker definition
 ├── package.json               # Dependencies & scripts
 └── README.md                  # Complete documentation
 ```
