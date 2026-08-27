@@ -288,10 +288,35 @@ process.on('uncaughtException', (err) => {
   console.error('[Uncaught Exception]:', err);
 });
 
+import http from 'http';
+
+// Create a lightweight HTTP server for Railway / cloud healthchecks
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({
+    status: 'online',
+    bot: client.user?.tag || 'connecting...',
+    uptime: process.uptime()
+  }));
+});
+
+server.listen(PORT, () => {
+  console.log(`🚀 Healthcheck server listening on port ${PORT}`);
+});
+
 // Login to Discord
 if (!CONFIG.DISCORD_TOKEN) {
-  console.warn('⚠️ WARNING: DISCORD_TOKEN is not set in .env file!');
-  console.warn('Please create a .env file based on .env.example with your Bot Token.');
+  console.warn('⚠️ WARNING: DISCORD_TOKEN is not set in environment variables!');
+  console.warn('Please add DISCORD_TOKEN in your Railway Variables or .env file.');
 } else {
-  client.login(CONFIG.DISCORD_TOKEN);
+  console.log('🔑 Attempting to log into Discord with token...');
+  client.login(CONFIG.DISCORD_TOKEN).catch((err) => {
+    console.error('❌ Discord Login Error:', err.message);
+    if (err.message.includes('disallowed intents') || err.message.includes('DisallowedIntents')) {
+      console.error('👉 FIX: Go to Discord Developer Portal -> Bot -> Enable "Message Content Intent" and "Server Members Intent"!');
+    } else if (err.message.includes('An invalid token was provided') || err.message.includes('TOKEN_INVALID')) {
+      console.error('👉 FIX: Your DISCORD_TOKEN in Railway Variables is invalid or incomplete. Please Reset and re-copy it from Discord Developer Portal!');
+    }
+  });
 }
