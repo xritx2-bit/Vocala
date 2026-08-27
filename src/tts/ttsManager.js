@@ -122,7 +122,13 @@ export class TTSManager {
       timeout: 10000
     });
 
-    return createAudioResource(url);
+    const resource = createAudioResource(url, {
+      inlineVolume: true
+    });
+    if (resource.volume) {
+      resource.volume.setVolume(1.2);
+    }
+    return resource;
   }
 }
 
