@@ -76,6 +76,9 @@ client.on('interactionCreate', async (interaction) => {
           });
         }
 
+        // Defer immediately so Discord doesn't timeout while we wait for voice connection
+        await interaction.deferReply();
+
         // Default to either specified text channel, interaction channel, or voice channel chat
         const textChannel = options.getChannel('text_channel') || interaction.channel || targetVoiceChannel;
         const queue = queueManager.join(targetVoiceChannel, textChannel);
@@ -109,7 +112,7 @@ client.on('interactionCreate', async (interaction) => {
         // Enqueue a short welcome voice announcement
         queue.enqueue('Vocala', 'Vocala connected. Hindi, English aur Hinglish VC chat reader start ho gaya hai.');
 
-        return interaction.reply({ embeds: [embed] });
+        return interaction.editReply({ embeds: [embed] });
       }
 
       case 'leave': {
