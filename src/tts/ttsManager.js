@@ -1,25 +1,24 @@
-import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
-import { CONFIG, SUPPORTED_VOICES, ANNOUNCEMENT_MODES } from '../config.js';
-import { createAudioResource, StreamType } from '@discordjs/voice';
-import { Readable } from 'stream';
-import prism from 'prism-media';
+import * as googleTTS from 'google-tts-api';
+import { CONFIG, SUPPORTED_LANGUAGES, ANNOUNCEMENT_MODES } from '../config.js';
+import { createAudioResource } from '@discordjs/voice';
 
 export class TTSManager {
   constructor() {
-    this.voiceSettings = new Map(); // guildId -> voiceId
-    this.modeSettings = new Map();  // guildId -> modeKey
+    this.langSettings = new Map(); // guildId -> langCode
+    this.modeSettings = new Map(); // guildId -> modeKey
   }
 
-  getVoice(guildId) {
-    return this.voiceSettings.get(guildId) || CONFIG.DEFAULT_VOICE;
+  getLang(guildId) {
+    return this.langSettings.get(guildId) || CONFIG.DEFAULT_LANG;
   }
 
-  setVoice(guildId, voiceId) {
-    const valid = SUPPORTED_VOICES.some(v => v.id === voiceId);
-    if (!valid) {
-      throw new Error(`Voice ${voiceId} is not supported.`);
+  setLang(guildId, langId) {
+    const langObj = SUPPORTED_LANGUAGES.find(l => l.id === langId || l.code === langId);
+    if (!langObj) {
+      throw new Error(`Language ${langId} is not supported.`);
     }
-    this.voiceSettings.set(guildId, voiceId);
+    this.langSettings.set(guildId, langObj.code);
+    return langObj;
   }
 
   getMode(guildId) {
@@ -95,7 +94,7 @@ export class TTSManager {
 
     // Limit length to avoid spam
     if (text.length > CONFIG.MAX_MESSAGE_LENGTH) {
-      text = text.substring(0, CONFIG.MAX_MESSAGE_LENGTH) + '... aur aage';
+      text = text.substring(0, CONFIG.MAX_MESSAGE_LENGTH);
     }
 
     return text;
@@ -111,41 +110,19 @@ export class TTSManager {
   }
 
   /**
-   * Generates native Discord OggOpus audio resource using msedge-tts + FFmpeg libopus
+   * Generates audio resource using Google TTS (battle-tested across top Discord bots)
    */
-  async createAudioResourceForText(text, guildId) {
-    const voiceId = this.getVoice(guildId);
-    const tts = new MsEdgeTTS();
-    await tts.setMetadata(voiceId, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+  createAudioResourceForText(text, guildId) {
+    const lang = this.getLang(guildId);
 
-    const { audioStream } = tts.toStream(text);
-    
-    const chunks = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
-    }
-    const audioBuffer = Buffer.concat(chunks);
-
-    const ffmpeg = new prism.FFmpeg({
-      args: [
-        '-analyzeduration', '0',
-        '-loglevel', '0',
-        '-f', 'mp3',
-        '-i', 'pipe:0',
-        '-c:a', 'libopus',
-        '-b:a', '64k',
-        '-ar', '48000',
-        '-ac', '2',
-        '-f', 'ogg'
-      ]
+    const url = googleTTS.getAudioUrl(text, {
+      lang: lang,
+      slow: false,
+      host: 'https://translate.google.com',
+      timeout: 10000
     });
 
-    const readable = Readable.from(audioBuffer);
-    const oggStream = readable.pipe(ffmpeg);
-
-    return createAudioResource(oggStream, {
-      inputType: StreamType.OggOpus
-    });
+    return createAudioResource(url);
   }
 }
 

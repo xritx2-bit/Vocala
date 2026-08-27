@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, REST, Routes, ChannelType } from 'discord.js';
-import { SUPPORTED_VOICES, ANNOUNCEMENT_MODES } from '../config.js';
+import { SUPPORTED_LANGUAGES, ANNOUNCEMENT_MODES } from '../config.js';
 
 export const slashCommands = [
   new SlashCommandBuilder()
@@ -26,15 +26,15 @@ export const slashCommands = [
 
   new SlashCommandBuilder()
     .setName('voice')
-    .setDescription('Change the Text-to-Speech voice for this server')
+    .setDescription('Change the Text-to-Speech language/voice for this server')
     .addStringOption(option => {
       option
         .setName('select')
-        .setDescription('Choose a neural voice (Hindi, Hinglish, Indian English, US, UK)')
+        .setDescription('Choose a language (Hindi, Indian English, US English, etc.)')
         .setRequired(true);
 
-      SUPPORTED_VOICES.forEach(v => {
-        option.addChoices({ name: `${v.name} [${v.gender}]`, value: v.id });
+      SUPPORTED_LANGUAGES.forEach(v => {
+        option.addChoices({ name: v.name, value: v.id });
       });
       return option;
     }),

@@ -8,7 +8,7 @@ import {
   ActivityType,
   ChannelType
 } from 'discord.js';
-import { CONFIG, SUPPORTED_VOICES, ANNOUNCEMENT_MODES } from './config.js';
+import { CONFIG, SUPPORTED_LANGUAGES, ANNOUNCEMENT_MODES } from './config.js';
 import { registerSlashCommands } from './commands/slashCommands.js';
 import { queueManager } from './voice/queueManager.js';
 import { ttsManager } from './tts/ttsManager.js';
@@ -85,8 +85,8 @@ client.on('interactionCreate', async (interaction) => {
           console.warn('[VoiceConnection] Handshake taking longer than expected:', e.message);
         }
 
-        const currentVoiceId = ttsManager.getVoice(guild.id);
-        const voiceObj = SUPPORTED_VOICES.find(v => v.id === currentVoiceId) || SUPPORTED_VOICES[0];
+        const currentLang = ttsManager.getLang(guild.id);
+        const langObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLang || l.id === currentLang) || SUPPORTED_LANGUAGES[0];
         const modeKey = ttsManager.getMode(guild.id);
 
         const embed = new EmbedBuilder()
@@ -98,11 +98,11 @@ client.on('interactionCreate', async (interaction) => {
             `Type anything in **#${textChannel.name}** in **Hindi, English, or Hinglish** and I will speak it aloud!`
           )
           .addFields(
-            { name: '🗣️ Active Voice', value: `${voiceObj.name}`, inline: true },
+            { name: '🗣️ Active Language', value: `${langObj.name}`, inline: true },
             { name: '📢 Format Mode', value: `${ANNOUNCEMENT_MODES[modeKey]?.name || modeKey}`, inline: true },
             { name: '💡 Quick Controls', value: '`/voice` • `/mode` • `/skip` • `/clear` • `/leave`', inline: false }
           )
-          .setFooter({ text: 'Vocala TTS • Natural Hindi & Hinglish Engine' })
+          .setFooter({ text: 'Vocala TTS • Production Discord Engine' })
           .setTimestamp();
 
         // Enqueue a short welcome voice announcement
@@ -131,18 +131,17 @@ client.on('interactionCreate', async (interaction) => {
       }
 
       case 'voice': {
-        const voiceId = options.getString('select');
-        ttsManager.setVoice(guild.id, voiceId);
+        const langId = options.getString('select');
+        const langObj = ttsManager.setLang(guild.id, langId);
 
-        const voiceObj = SUPPORTED_VOICES.find(v => v.id === voiceId);
         const embed = new EmbedBuilder()
           .setColor(0x2ecc71)
-          .setTitle('🗣️ Voice Changed Successfully')
-          .setDescription(`Active Voice is now set to **${voiceObj?.name || voiceId}**.\n\nNow reading in this accent!`);
+          .setTitle('🗣️ Language / Voice Changed Successfully')
+          .setDescription(`Active Voice is now set to **${langObj.name}**.\n\nNow reading in this language accent!`);
 
         const queue = queueManager.get(guild.id);
         if (queue) {
-          queue.enqueue('Vocala', `Voice has been changed to ${voiceObj?.gender || ''} voice.`);
+          queue.enqueue('Vocala', `Voice language set to ${langObj.name}.`);
         }
 
         return interaction.reply({ embeds: [embed] });
@@ -186,8 +185,8 @@ client.on('interactionCreate', async (interaction) => {
 
       case 'status': {
         const queue = queueManager.get(guild.id);
-        const voiceId = ttsManager.getVoice(guild.id);
-        const voiceObj = SUPPORTED_VOICES.find(v => v.id === voiceId) || SUPPORTED_VOICES[0];
+        const currentLang = ttsManager.getLang(guild.id);
+        const langObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLang || l.id === currentLang) || SUPPORTED_LANGUAGES[0];
         const modeKey = ttsManager.getMode(guild.id);
 
         const embed = new EmbedBuilder()
@@ -197,7 +196,7 @@ client.on('interactionCreate', async (interaction) => {
             { name: '🔌 Connected VC', value: queue ? `<#${queue.voiceChannelId}>` : 'Not Connected', inline: true },
             { name: '💬 Monitored Chat', value: queue ? `<#${queue.textChannelId}>` : 'None', inline: true },
             { name: '📋 Queue Length', value: queue ? `${queue.queue.length} pending` : '0', inline: true },
-            { name: '🗣️ Current Voice', value: `${voiceObj.name}`, inline: true },
+            { name: '🗣️ Current Language', value: `${langObj.name}`, inline: true },
             { name: '📢 Format Mode', value: `${ANNOUNCEMENT_MODES[modeKey]?.name || modeKey}`, inline: true },
             { name: '⚡ Currently Speaking', value: queue?.isPlaying ? 'Yes' : 'No', inline: true }
           )

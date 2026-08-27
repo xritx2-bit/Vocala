@@ -4,60 +4,48 @@ dotenv.config();
 export const CONFIG = {
   DISCORD_TOKEN: process.env.DISCORD_TOKEN || '',
   CLIENT_ID: process.env.CLIENT_ID || '',
-  DEFAULT_VOICE: process.env.DEFAULT_VOICE || 'hi-IN-MadhurNeural',
+  DEFAULT_LANG: process.env.DEFAULT_LANG || 'hi', // Hindi & Hinglish default
   DEFAULT_MODE: process.env.DEFAULT_MODE || 'hinglish',
-  MAX_MESSAGE_LENGTH: parseInt(process.env.MAX_MESSAGE_LENGTH || '300', 10),
-  IDLE_TIMEOUT_MS: 5 * 60 * 1000 // Disconnect after 5 minutes of inactivity
+  MAX_MESSAGE_LENGTH: parseInt(process.env.MAX_MESSAGE_LENGTH || '250', 10),
+  MAX_QUEUE_SIZE: 10,
+  IDLE_TIMEOUT_MS: 5 * 60 * 1000 // 5 minutes
 };
 
-export const SUPPORTED_VOICES = [
+export const SUPPORTED_LANGUAGES = [
   {
-    id: 'hi-IN-MadhurNeural',
-    name: 'Madhur (Hindi / Hinglish Male - Recommended)',
-    lang: 'hi-IN',
-    gender: 'Male'
+    id: 'hi',
+    name: 'Hindi & Hinglish (हिंदी / Hinglish - Recommended)',
+    code: 'hi'
   },
   {
-    id: 'hi-IN-SwaraNeural',
-    name: 'Swara (Hindi / Hinglish Female)',
-    lang: 'hi-IN',
-    gender: 'Female'
+    id: 'en-in',
+    name: 'Indian English (English - India)',
+    code: 'en-IN'
   },
   {
-    id: 'en-IN-PrabhatNeural',
-    name: 'Prabhat (Indian English Male)',
-    lang: 'en-IN',
-    gender: 'Male'
+    id: 'en',
+    name: 'Standard English (English - US)',
+    code: 'en'
   },
   {
-    id: 'en-IN-NeerjaNeural',
-    name: 'Neerja (Indian English Female)',
-    lang: 'en-IN',
-    gender: 'Female'
+    id: 'en-gb',
+    name: 'British English (English - UK)',
+    code: 'en-GB'
   },
   {
-    id: 'en-US-JennyNeural',
-    name: 'Jenny (US English Female)',
-    lang: 'en-US',
-    gender: 'Female'
+    id: 'es',
+    name: 'Spanish (Español)',
+    code: 'es'
   },
   {
-    id: 'en-US-GuyNeural',
-    name: 'Guy (US English Male)',
-    lang: 'en-US',
-    gender: 'Male'
+    id: 'fr',
+    name: 'French (Français)',
+    code: 'fr'
   },
   {
-    id: 'en-GB-RyanNeural',
-    name: 'Ryan (UK English Male)',
-    lang: 'en-GB',
-    gender: 'Male'
-  },
-  {
-    id: 'en-GB-SoniaNeural',
-    name: 'Sonia (UK English Female)',
-    lang: 'en-GB',
-    gender: 'Female'
+    id: 'ja',
+    name: 'Japanese (日本語)',
+    code: 'ja'
   }
 ];
 
