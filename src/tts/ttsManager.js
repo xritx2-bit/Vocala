@@ -126,7 +126,15 @@ export class TTSManager {
     await tts.setMetadata(voiceId, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
     const { audioStream } = tts.toStream(text);
-    return createAudioResource(audioStream, {
+    
+    // Buffer audio stream to ensure complete payload before playback
+    const chunks = [];
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
+    }
+    const audioBuffer = Buffer.concat(chunks);
+
+    return createAudioResource(Readable.from(audioBuffer), {
       inputType: StreamType.Arbitrary
     });
   }
