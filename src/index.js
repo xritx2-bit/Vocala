@@ -13,6 +13,12 @@ import { registerSlashCommands } from './commands/slashCommands.js';
 import { queueManager } from './voice/queueManager.js';
 import { ttsManager } from './tts/ttsManager.js';
 
+import ffmpegPath from 'ffmpeg-static';
+if (ffmpegPath) {
+  process.env.FFMPEG_PATH = ffmpegPath;
+  console.log('🎬 FFmpeg path configured:', ffmpegPath);
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -69,7 +75,8 @@ client.on('interactionCreate', async (interaction) => {
           });
         }
 
-        const textChannel = options.getChannel('text_channel') || targetVoiceChannel;
+        // Default to either specified text channel, interaction channel, or voice channel chat
+        const textChannel = options.getChannel('text_channel') || interaction.channel || targetVoiceChannel;
         const queue = queueManager.join(targetVoiceChannel, textChannel);
 
         const currentVoiceId = ttsManager.getVoice(guild.id);
@@ -253,7 +260,10 @@ client.on('messageCreate', async (message) => {
   if (!message.guild) return;
 
   try {
-    queueManager.enqueueMessage(message);
+    const enqueued = queueManager.enqueueMessage(message);
+    if (enqueued) {
+      console.log(`[Message Handled] From ${message.author.username} in #${message.channel.name}: "${message.content}"`);
+    }
   } catch (error) {
     console.error('[Message Handler Error]:', error);
   }

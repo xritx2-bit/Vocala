@@ -28,7 +28,7 @@ class GuildQueue {
       channelId: voiceChannel.id,
       guildId: guildId,
       adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-      selfDeaf: true,
+      selfDeaf: false,
       selfMute: false
     });
 
@@ -40,28 +40,36 @@ class GuildQueue {
   }
 
   setupListeners() {
+    this.player.on(AudioPlayerStatus.Playing, () => {
+      console.log(`[AudioPlayer] 🔊 Speaking in Guild ${this.guildId}: "${this.currentTrack?.speechText}"`);
+    });
+
     this.player.on(AudioPlayerStatus.Idle, () => {
+      console.log(`[AudioPlayer] ⏹️ Idle in Guild ${this.guildId}`);
       this.isPlaying = false;
       this.currentTrack = null;
       this.playNext();
     });
 
     this.player.on('error', (error) => {
-      console.error(`[AudioPlayer Error] Guild ${this.guildId}:`, error.message);
+      console.error(`[AudioPlayer Error] Guild ${this.guildId}:`, error.message, error.stack);
       this.isPlaying = false;
       this.currentTrack = null;
       this.playNext();
     });
 
+    this.connection.on(VoiceConnectionStatus.Ready, () => {
+      console.log(`[VoiceConnection] ✅ Ready in Guild ${this.guildId}, VC: ${this.voiceChannelId}`);
+    });
+
     this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+      console.log(`[VoiceConnection] ⚠️ Disconnected in Guild ${this.guildId}`);
       try {
         await Promise.race([
           entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
           entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000)
         ]);
-        // Seems to be reconnecting to a new voice server - do not disconnect
       } catch (error) {
-        // Disconnect is permanent
         this.destroy();
       }
     });
@@ -79,6 +87,7 @@ class GuildQueue {
 
   enqueue(authorName, text) {
     const formatted = ttsManager.formatAnnouncement(authorName, text, this.guildId);
+    console.log(`[Queue] 📥 Enqueuing message from "${authorName}": "${text}" -> Speaking: "${formatted}"`);
     this.queue.push({ authorName, text, speechText: formatted });
     this.resetIdleTimer();
 
@@ -102,6 +111,7 @@ class GuildQueue {
     this.currentTrack = item;
 
     try {
+      console.log(`[TTS] 🎙️ Synthesizing speech: "${item.speechText}"`);
       const resource = await ttsManager.createAudioResourceForText(item.speechText, this.guildId);
       this.player.play(resource);
     } catch (err) {
