@@ -124,21 +124,17 @@ You can switch voices at any time using `/voice`.
 
 ---
 
-## 🚀 Deploy to Railway (24/7 Free & Easy Hosting)
+## 🚀 Free 24/7 Hosting on Discloud
 
-You can host Vocala on [Railway.app](https://railway.app) to keep the bot online 24/7 without needing your PC turned on:
+You can host Vocala on [Discloud.com](https://discloud.com) (free Discord bot cloud platform):
 
-1. **Log in to Railway**: Go to [railway.app](https://railway.app) and sign in with GitHub.
-2. **Create New Project**: Click **New Project** ➔ **Deploy from GitHub repo**.
-3. **Select Repository**: Choose `xritx2-bit/Vocala`.
-4. **Add Variables**:
-   - Go to your newly created service in Railway ➔ Click the **Variables** tab.
-   - Click **Add Variable** and add:
-     - `DISCORD_TOKEN` = `your_bot_token`
-     - `CLIENT_ID` = `your_application_client_id`
-     - `DEFAULT_VOICE` = `hi-IN-MadhurNeural` (optional)
-     - `DEFAULT_MODE` = `hinglish` (optional)
-5. **Deploy**: Railway will automatically detect the configuration, build the container, and start your bot!
+1. **Log in to Discloud**: Go to [discloud.com](https://discloud.com) and log in with Discord.
+2. **Deploy via GitHub**:
+   - Go to **Add App / Applications** ➔ Click the **GitHub** tab.
+   - Select `xritx2-bit/Vocala` and click **Deploy**.
+3. **Set Environment Variables**:
+   - Under your Discloud application settings, add your `DISCORD_TOKEN` and `CLIENT_ID`.
+4. The bot will stay online 24/7!
 
 ---
 
@@ -158,9 +154,7 @@ Vocala/
 ├── test/
 │   └── test-tts.js            # Offline synthesis verification test
 ├── .env.example               # Environment template
-├── Dockerfile                 # Container setup for Railway/Docker
-├── railway.json               # Railway build & restart policy
-├── Procfile                   # Worker definition
+├── discloud.config            # Discloud bot configuration
 ├── package.json               # Dependencies & scripts
 └── README.md                  # Complete documentation
 ```
