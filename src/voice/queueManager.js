@@ -3,6 +3,7 @@ import {
   createAudioPlayer,
   AudioPlayerStatus,
   VoiceConnectionStatus,
+  NoSubscriberBehavior,
   entersState,
   getVoiceConnection
 } from '@discordjs/voice';
@@ -18,10 +19,16 @@ class GuildQueue {
     this.isPlaying = false;
     this.currentTrack = null;
     this.idleTimer = null;
+    this.watchdogTimer = null;
     this.onIdleDisconnect = onIdleDisconnect;
 
-    // Create Audio Player
-    this.player = createAudioPlayer();
+    // Create Audio Player with active playback behavior
+    this.player = createAudioPlayer({
+      behaviors: {
+        noSubscriber: NoSubscriberBehavior.Play,
+        maxMissedFrames: 250
+      }
+    });
 
     // Create Voice Connection
     this.connection = joinVoiceChannel({
@@ -46,6 +53,7 @@ class GuildQueue {
 
     this.player.on(AudioPlayerStatus.Idle, () => {
       console.log(`[AudioPlayer] ⏹️ Idle in Guild ${this.guildId}`);
+      if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
       this.isPlaying = false;
       this.currentTrack = null;
       this.playNext();
@@ -53,6 +61,7 @@ class GuildQueue {
 
     this.player.on('error', (error) => {
       console.error(`[AudioPlayer Error] Guild ${this.guildId}:`, error.message, error.stack);
+      if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
       this.isPlaying = false;
       this.currentTrack = null;
       this.playNext();
@@ -60,6 +69,7 @@ class GuildQueue {
 
     this.connection.on(VoiceConnectionStatus.Ready, () => {
       console.log(`[VoiceConnection] ✅ Ready in Guild ${this.guildId}, VC: ${this.voiceChannelId}`);
+      this.connection.subscribe(this.player);
     });
 
     this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
@@ -97,6 +107,8 @@ class GuildQueue {
   }
 
   async playNext() {
+    if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
+
     if (this.queue.length === 0) {
       this.isPlaying = false;
       this.currentTrack = null;
@@ -110,12 +122,21 @@ class GuildQueue {
     const item = this.queue.shift();
     this.currentTrack = item;
 
+    // Safety watchdog: auto-skip track after 15 seconds if stalled
+    this.watchdogTimer = setTimeout(() => {
+      if (this.isPlaying && this.currentTrack === item) {
+        console.warn(`[Watchdog] Track timed out after 15s, advancing queue...`);
+        this.player.stop(true);
+      }
+    }, 15_000);
+
     try {
       console.log(`[TTS] 🎙️ Synthesizing speech: "${item.speechText}"`);
       const resource = await ttsManager.createAudioResourceForText(item.speechText, this.guildId);
       this.player.play(resource);
     } catch (err) {
       console.error(`[TTS Synthesis Error] Guild ${this.guildId}:`, err);
+      if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
       this.isPlaying = false;
       this.currentTrack = null;
       this.playNext();
@@ -123,6 +144,7 @@ class GuildQueue {
   }
 
   skip() {
+    if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
     if (this.isPlaying) {
       this.player.stop();
       return true;

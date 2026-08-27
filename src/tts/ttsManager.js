@@ -1,20 +1,13 @@
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { CONFIG, SUPPORTED_VOICES, ANNOUNCEMENT_MODES } from '../config.js';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import { createAudioResource, StreamType } from '@discordjs/voice';
 import { Readable } from 'stream';
+import prism from 'prism-media';
 
 export class TTSManager {
   constructor() {
     this.voiceSettings = new Map(); // guildId -> voiceId
     this.modeSettings = new Map();  // guildId -> modeKey
-    this.tempDir = path.join(os.tmpdir(), 'vocala_tts');
-
-    if (!fs.existsSync(this.tempDir)) {
-      fs.mkdirSync(this.tempDir, { recursive: true });
-    }
   }
 
   getVoice(guildId) {
@@ -118,7 +111,7 @@ export class TTSManager {
   }
 
   /**
-   * Generates audio stream/resource for the text using msedge-tts
+   * Generates Raw PCM audio resource for the text using msedge-tts + prism.FFmpeg
    */
   async createAudioResourceForText(text, guildId) {
     const voiceId = this.getVoice(guildId);
@@ -127,15 +120,29 @@ export class TTSManager {
 
     const { audioStream } = tts.toStream(text);
     
-    // Buffer audio stream to ensure complete payload before playback
     const chunks = [];
     for await (const chunk of audioStream) {
       chunks.push(chunk);
     }
     const audioBuffer = Buffer.concat(chunks);
 
-    return createAudioResource(Readable.from(audioBuffer), {
-      inputType: StreamType.Arbitrary
+    const ffmpeg = new prism.FFmpeg({
+      args: [
+        '-analyzeduration', '0',
+        '-loglevel', '0',
+        '-f', 'mp3',
+        '-i', 'pipe:0',
+        '-f', 's16le',
+        '-ar', '48000',
+        '-ac', '2'
+      ]
+    });
+
+    const readable = Readable.from(audioBuffer);
+    const pcmStream = readable.pipe(ffmpeg);
+
+    return createAudioResource(pcmStream, {
+      inputType: StreamType.Raw
     });
   }
 }
