@@ -80,8 +80,15 @@ class GuildQueue {
           entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000)
         ]);
       } catch (error) {
-        this.destroy();
+        console.warn(`[VoiceConnection] Failed to reconnect, tearing down guild ${this.guildId}`);
+        if (this.onIdleDisconnect) this.onIdleDisconnect(this.guildId);
+        else this.destroy();
       }
+    });
+
+    this.connection.on(VoiceConnectionStatus.Destroyed, () => {
+      console.log(`[VoiceConnection] Destroyed in Guild ${this.guildId}`);
+      if (this.onIdleDisconnect) this.onIdleDisconnect(this.guildId);
     });
   }
 
@@ -96,6 +103,12 @@ class GuildQueue {
   }
 
   enqueue(authorName, text) {
+    // Prevent queue backlog overflow during fast chat
+    if (this.queue.length >= 10) {
+      console.warn(`[Queue] Queue overflow (10 messages). Dropping oldest pending message.`);
+      this.queue.shift();
+    }
+
     const formatted = ttsManager.formatAnnouncement(authorName, text, this.guildId);
     console.log(`[Queue] 📥 Enqueuing message from "${authorName}": "${text}" -> Speaking: "${formatted}"`);
     this.queue.push({ authorName, text, speechText: formatted });
